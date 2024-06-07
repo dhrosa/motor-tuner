@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "motor-tuner"
+version = "0.0.0"
+description = ''
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+dependencies = []
+
+[tool.hatch.envs.dev]
+dependencies = [
+    "black",
+    "isort",
+    "mypy",
+    "pylama",
+    "pytest",
+    "setuptools",
+]
+
+[tool.hatch.envs.dev.scripts]
+format = [
+       "isort --color .",
+       "black .",
+]
+
+check = [
+      "pylama --ignore E203 .", # E203 is not pep8-compliant, and black breaks it
+      "mypy --strict --pretty .",
+]
+
+test = "pytest"
+
+all = [
+    "format",
+    "check",
+    "test",
+]
