@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import TypeAlias
 
+from pytest import raises
+
 from motor_tuner.modbus import Client, Framer
 
 
@@ -51,3 +53,15 @@ def test_write_success() -> None:
     ]
     client = Client(framer)
     client[7] = 257
+
+
+def test_write_response_mismatch() -> None:
+    framer = FakeFramer()
+    framer.events = [
+        PduWrite(bytes([63, 6, 0, 7, 1, 1])),
+        PduRead(bytes([63, 6, 0, 7, 1, 2])),
+    ]
+    client = Client(framer)
+
+    with raises(ValueError):
+        client[7] = 257
