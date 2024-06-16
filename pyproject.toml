@@ -17,6 +17,7 @@ python = "3.12"
 [tool.hatch.envs.dev]
 dependencies = [
     "black",
+    "circuitpython-stubs",
     "isort",
     "mypy",
     "pylama",
