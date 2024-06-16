@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 from pytest import fixture, raises
 
-from motor_tuner.modbus import Framer, RegisterBank
+from motor_tuner.modbus.framer import Framer
+from motor_tuner.modbus.register_bank import RegisterBank
 
 
 @dataclass

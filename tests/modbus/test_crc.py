@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from motor_tuner.crc import checksum_bytes
+from motor_tuner.modbus.crc import checksum_bytes
 
 
 def checksum_hex(data: Iterable[int]) -> str:
