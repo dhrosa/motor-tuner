@@ -2,18 +2,23 @@ import struct
 
 
 class Framer:
+    """Translates Modbus protocol data units (PDUs) to application data units (ADUs)."""
+
     def read_pdu(self, size: int) -> bytes:
-        return b""
+        raise NotImplementedError
 
     def write_pdu(self, data: bytes) -> None:
-        return
+        raise NotImplementedError
 
 
-class Client:
+class RegisterBank:
+    """Interface to Modbus holding registers."""
+
     def __init__(self, framer: Framer) -> None:
         self.framer = framer
 
     def __getitem__(self, key: int) -> int:
+        """Read register value."""
         read_command = struct.pack(
             ">BBHH",
             # Address
@@ -32,6 +37,7 @@ class Client:
         return value  # type: ignore
 
     def __setitem__(self, key: int, value: int) -> None:
+        """Write register value."""
         write_command = struct.pack(
             ">BBHH",
             # Address

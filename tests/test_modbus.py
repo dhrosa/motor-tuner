@@ -1,27 +1,29 @@
 from dataclasses import dataclass
-from typing import TypeAlias
 
-from pytest import raises
+from pytest import fixture, raises
 
-from motor_tuner.modbus import Client, Framer
+from motor_tuner.modbus import Framer, RegisterBank
 
 
 @dataclass
-class PduRead:
+class PduEvent:
     payload: bytes
 
 
 @dataclass
-class PduWrite:
-    payload: bytes
+class PduRead(PduEvent):
+    pass
 
 
-PduEvent: TypeAlias = PduRead | PduWrite
+@dataclass
+class PduWrite(PduEvent):
+    pass
 
 
 class FakeFramer(Framer):
     def __init__(self) -> None:
         self.events = list[PduEvent]()
+        """Ordered list of expected requests and responses."""
 
     def read_pdu(self, size: int) -> bytes:
         event = self.events.pop(0)
@@ -34,34 +36,44 @@ class FakeFramer(Framer):
         assert list(data) == list(event.payload)
 
 
-def test_read() -> None:
-    framer = FakeFramer()
-    framer.events = [
+@fixture
+def framer() -> FakeFramer:
+    return FakeFramer()
+
+
+@fixture
+def events(framer: FakeFramer) -> list[PduEvent]:
+    """Fixture for mutable sequence of expected PDU requests and responses."""
+    return framer.events
+
+
+@fixture
+def registers(framer: FakeFramer) -> RegisterBank:
+    return RegisterBank(framer)
+
+
+def test_read(registers: RegisterBank, events: list[PduEvent]) -> None:
+    events[:] = [
         PduWrite(bytes([63, 3, 0, 7, 0, 1])),
         PduRead(bytes([63, 3, 2, 1, 1])),
     ]
-    client = Client(framer)
-
-    assert client[7] == 257
+    assert registers[7] == 257
 
 
-def test_write_success() -> None:
-    framer = FakeFramer()
-    framer.events = [
+def test_write_success(registers: RegisterBank, events: list[PduEvent]) -> None:
+    events[:] = [
         PduWrite(bytes([63, 6, 0, 7, 1, 1])),
         PduRead(bytes([63, 6, 0, 7, 1, 1])),
     ]
-    client = Client(framer)
-    client[7] = 257
+    registers[7] = 257
 
 
-def test_write_response_mismatch() -> None:
-    framer = FakeFramer()
-    framer.events = [
+def test_write_response_mismatch(
+    registers: RegisterBank, events: list[PduEvent]
+) -> None:
+    events[:] = [
         PduWrite(bytes([63, 6, 0, 7, 1, 1])),
         PduRead(bytes([63, 6, 0, 7, 1, 2])),
     ]
-    client = Client(framer)
-
     with raises(ValueError):
-        client[7] = 257
+        registers[7] = 257
